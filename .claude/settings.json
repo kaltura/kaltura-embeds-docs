@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "kalt-ai-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "kaltura/kalt-ai-plugin-marketplace"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "docs-review@kalt-ai-plugins": true
+  }
+}
