@@ -83,32 +83,45 @@ function callNative(name, args) {
   });
 }
 
-async function start({ ks, widgetId, partnerId, embed = 'headless', dynamicVariables, threadId, kickOffPhrase }) {
+async function start({ ks, widgetId, partnerId, embed, dynamicVariables, threadId, kickOffPhrase }) {
   try {
+    const mount = { headless: mountHeadless, contained: mountContained }[embed];
+    if (!mount) throw new Error(`embed must be "headless" or "contained", got ${JSON.stringify(embed)}`);
     const api = await getAvatar({ ks, widgetId, partnerId });
     mounted?.remove();
 
     const root = document.getElementById('avatar-root');
     root.className = embed;
-    const options = {
-      elementId: 'avatar-root',
-      autoConnect: true,
-      connect: {
-        dynamicVariables,                                              // app -> agent: initial context
-        context: threadId ? { type: 'thread', threadId } : undefined,  // resume a conversation
-        kickOffPhrase,
-        onThreadIdChange: (id) => postToNative({ type: 'thread', threadId: id }),
-      },
-    };
-
-    mounted = embed === 'contained'
-      // The avatar also creates the content: stage, captions, controls and Dynamic UI inside the WebView.
-      ? api.contained({ ...options, stageMode: 'contained', forceOrientation: 'portrait' })
-      // The avatar works with the app's content: video only, every control is native.
-      : api.headless(options);
+    mounted = mount(api, {
+      dynamicVariables,                                              // app -> agent: initial context
+      context: threadId ? { type: 'thread', threadId } : undefined,  // new session, or continue a thread
+      kickOffPhrase,
+      onThreadIdChange: (id) => postToNative({ type: 'thread', threadId: id }),
+    });
   } catch (error) {
     postToNative({ type: 'error', message: String(error?.message || error) });
   }
+}
+
+// ---- embeds ------------------------------------------------------------------
+// The avatar works with the app's content: video only, every control is native.
+function mountHeadless(api, connect) {
+  return api.headless({
+    elementId: 'avatar-root',
+    autoConnect: true, // your app's button starts the session
+    connect,
+  });
+}
+
+// The avatar also creates the content: stage, captions, controls and Dynamic UI inside the WebView.
+function mountContained(api, connect) {
+  return api.contained({
+    elementId: 'avatar-root',
+    autoConnect: true,            // your app's button starts the session, not the embed's own button
+    stageMode: 'contained',       // keep the stage inside the WebView
+    forceOrientation: 'portrait', // stack the avatar above its answers on a phone
+    connect,
+  });
 }
 
 function end() {

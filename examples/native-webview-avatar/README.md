@@ -1,6 +1,6 @@
 # Avatar in a native app WebView
 
-A native iOS, Android or React Native app hosts a Kaltura conversational avatar in a WebView. The WebView loads a small page (`avatar/`) that mounts the avatar and talks to native code over a JSON bridge. Native code supplies the session, the microphone, the app's context and the native actions.
+A native iOS, Android or React Native app hosts a Kaltura conversational avatar in a WebView. The WebView loads a small page (`avatar/`) that mounts the avatar and talks to native code over a JSON bridge. Native code supplies the agent's widget ID (and a saved thread ID to continue a conversation), the microphone, the app's context and the native actions. The page initializes the agent session itself.
 
 This example has two parts:
 
@@ -51,7 +51,7 @@ Open it in a desktop browser and allow the microphone. The **Fake agent** button
 
 ## Agent setup
 
-The agent only calls tools that exist in its configuration, and only follows the flow when its prompts say so:
+Client tools are optional, and there's no required set: these three are the example's own, for its fictional home-energy app. To run the scenario as written, the agent needs them in its configuration, and prompts that tell it when to use them:
 
 - [`agent/client-tools.json`](agent/client-tools.json): the three client tools. Names and argument names must match exactly (case-sensitive). Turn on **Wait for response** for all of them; `propose_charging_schedule` needs a 120 s timeout because the user has to tap Save.
 - [`agent/prompt-knowledge.md`](agent/prompt-knowledge.md): persona, the flow and the facts the agent may use.
@@ -75,7 +75,7 @@ All messages are JSON objects with a `type`.
 
 | type | fields | effect |
 | --- | --- | --- |
-| `start` | `ks`, `widgetId`, `partnerId`, `embed?`, `dynamicVariables`, `threadId?`, `kickOffPhrase?` | Create the workspace (once), mount `headless` (default) or `contained`, connect |
+| `start` | `widgetId`, `partnerId`, `embed`, `dynamicVariables`, `threadId?`, `kickOffPhrase?` | Create the workspace (once), mount `embed` (required: `headless` or `contained`), initialize the agent session (new, or continuing `threadId`) and connect |
 | `end` | — | Disconnect and unmount; frees the microphone |
 | `mute` / `unmute` | — | Mute or unmute the user's microphone |
 | `updateVariables` | `variables` | Replace the agent's dynamic variables. Always send the full set |
@@ -108,7 +108,7 @@ All messages are JSON objects with a `type`.
 
 ## Notes
 
-- **Sessions.** The simulator starts an anonymous widget session in the browser. In production, mint a short-lived KS on your backend for the signed-in user. Never ship admin or App Token secrets in the app.
+- **Sessions.** The page starts an anonymous agent session from the widget ID; the app only decides whether it's new or continues a saved thread. That fits public information, or an agent that verifies the user during the conversation (for example with a one-time password). When the app already knows the user, pass a short-lived token of your own as a dynamic variable for the agent to use in that session. Never ship admin or App Token secrets in the app.
 - **HTTPS.** Microphone access needs a secure context. Serve `avatar/` over HTTPS (or `localhost`). Over plain `http://` on a LAN IP, `avatar/webview.html` polyfills `crypto.randomUUID` so the runtime loads, but the microphone still won't work.
 - **Keep the WebView laid out.** Hide it with opacity, not `display: none` or a zero size, or the OS may not grant the microphone and WebRTC may not start.
 - **Tool arguments are untrusted.** They come from a language model: validate them and map them onto fixed lists, as `handleToolCall()` in `host/host.js` does.

@@ -28,7 +28,8 @@ let muted = false;
 let view = 'energy';
 let period = 'last_month'; // period shown on the Energy screen
 
-// ---- 1. App init: mint a KS + fetch static avatar media ---------------------
+// ---- 1. Optional: placeholder media for the floating card -------------------
+// The agent session itself is started by the page from the widget ID (see start below).
 async function appInit() {
   const post = (url, body, headers = {}) =>
     fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: body && JSON.stringify(body) }).then((r) => r.json());
@@ -252,7 +253,6 @@ async function startSession(resume) {
   sendToWebView({
     type: 'start',
     embed, // headless: the avatar works with the app's content. contained: it also creates the content.
-    ks: init?.ks,
     widgetId: config.widgetId,
     partnerId: config.partnerId,
     dynamicVariables: screenContext(),

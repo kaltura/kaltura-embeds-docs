@@ -1,4 +1,4 @@
-# Kaltura Embeds — Examples
+# Kaltura Embeds Docs: Examples
 
 Runnable examples for building with Kaltura embeds: conversational avatars, chat and Dynamic UI, in web pages and native apps.
 
@@ -34,7 +34,7 @@ Most examples need Node 20.6 or later and an agent (widget ID and partner ID) of
 ## Layout
 
 ```
-kaltura-embeds/
+kaltura-embeds-docs/
 ├── README.md
 └── examples/
     └── native-webview-avatar/
