@@ -1,0 +1,10 @@
+{
+  "name": "kaltura-embeds-example-native-webview-avatar",
+  "private": true,
+  "type": "module",
+  "description": "Avatar in a native app WebView: browser simulator of the native shell plus the page the WebView loads",
+  "engines": { "node": ">=20.6" },
+  "scripts": {
+    "start": "node --env-file=.env server.mjs"
+  }
+}

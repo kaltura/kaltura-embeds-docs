@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Avatar in a native WebView — demo</title>
+    <link rel="stylesheet" href="./host/host.css" />
+  </head>
+  <body>
+    <main class="stage">
+      <!-- ================= The "native app" ================= -->
+      <section class="phone" id="phone" aria-label="Simulated native app">
+        <header class="appbar">
+          <button class="icon-btn" id="menu-btn" aria-label="Menu">☰</button>
+          <h1 id="title">Energy</h1>
+          <span class="appbar-spacer"></span>
+        </header>
+
+        <nav class="menu" id="menu" hidden>
+          <button data-view="energy">⚡ Energy</button>
+          <button data-view="charger">🚗 EV Charger</button>
+          <button data-view="schedule">🗓 Schedule</button>
+        </nav>
+
+        <div class="toast" id="toast" hidden></div>
+
+        <div class="pages">
+          <article class="page" id="page-energy" data-title="Energy">
+            <h2>Energy</h2>
+            <div class="tabs" id="period-tabs">
+              <button data-period="last_month">Last month</button>
+              <button data-period="this_month">This month</button>
+            </div>
+            <div class="flow">
+              <div><b id="e-produced">—</b><span>Produced</span></div>
+              <div><b id="e-exported">—</b><span>Sent to grid</span></div>
+              <div><b id="e-evening">—</b><span>Evening usage</span></div>
+            </div>
+            <ul class="list">
+              <li>System status: all 19 panels OK</li>
+              <li>Site: 2418 Maple Ridge Dr · 7.6 kW</li>
+            </ul>
+          </article>
+
+          <article class="page" id="page-charger" data-title="EV Charger" hidden>
+            <h2>EV Charger</h2>
+            <p>Brightside Home EV Charger</p>
+            <div class="card"><span>Status</span><b>Plugged in</b></div>
+            <div class="card"><span>Charging mode</span><b>Standard</b></div>
+            <div class="card"><span>Active schedule</span><b id="c-schedule">None</b></div>
+            <button class="primary-btn" data-view="schedule">Edit schedule</button>
+          </article>
+
+          <article class="page" id="page-schedule" data-title="Schedule" hidden>
+            <h2>Charging schedule</h2>
+            <p class="prefill-note" id="prefill-note" hidden>✨ Suggested by your assistant. Review and tap Save.</p>
+            <form class="form" id="schedule-form">
+              <label>Days
+                <select id="f-days">
+                  <option value="weekdays">Weekdays</option>
+                  <option value="weekends">Weekends</option>
+                  <option value="daily">Every day</option>
+                </select>
+              </label>
+              <label>Start <input id="f-start" type="time" value="22:00" /></label>
+              <label>End <input id="f-end" type="time" value="07:00" /></label>
+              <label class="check"><input id="f-pv" type="checkbox" /> Excess PV (charge from extra solar first)</label>
+              <button class="primary-btn" type="submit">Save</button>
+            </form>
+          </article>
+        </div>
+
+        <!-- Floating, draggable WebView container (native-owned) -->
+        <div class="float" id="float" hidden>
+          <div class="float-media">
+            <img id="preview" alt="" />
+            <img id="loading-img" alt="" hidden />
+            <video id="loading-video" muted loop playsinline hidden></video>
+            <iframe id="webview" title="Avatar WebView" allow="microphone; autoplay"></iframe>
+            <div class="drag-surface" id="drag" title="Drag me"></div>
+            <span class="badge" id="badge"></span>
+          </div>
+          <div class="float-controls" id="controls"></div>
+        </div>
+
+        <button class="fab" id="fab">✨ Ask assistant</button>
+
+        <div class="home" id="home" hidden>
+          <p>Home screen</p>
+          <button id="open-app">☀️ Brightside</button>
+        </div>
+      </section>
+
+      <!-- ================= Simulator side panel ================= -->
+      <aside class="panel">
+        <h2>Simulator</h2>
+        <p class="hint">
+          Left: native shell. The avatar is a WebView (<code>avatar/webview.html</code>) talking to it over a JSON
+          bridge. Right: every bridge message, live.
+        </p>
+        <fieldset class="embed-choice" id="embed-choice">
+          <legend>Embed for the next session</legend>
+          <label><input type="radio" name="embed" value="headless" checked /> <b>Headless</b>: floating card, the avatar works with the app's content</label>
+          <label><input type="radio" name="embed" value="contained" /> <b>Contained</b>: full screen, the avatar also creates the content (Dynamic UI)</label>
+        </fieldset>
+        <div class="panel-actions">
+          <button id="bg-btn">⬇ Send app to background</button>
+          <button data-fake="get_energy_summary">🤖 Fake agent: get_energy_summary</button>
+          <button data-fake="go_to">🤖 Fake agent: go_to energy (last month)</button>
+          <button data-fake="propose_charging_schedule">🤖 Fake agent: propose_charging_schedule</button>
+          <button id="clear-btn">🗑 Forget saved thread</button>
+        </div>
+        <div class="kv"><span>session</span><code id="thread-val">—</code></div>
+        <div class="kv"><span>state</span><code id="state-val">idle</code></div>
+        <pre class="log" id="log"></pre>
+      </aside>
+    </main>
+    <script type="module" src="./host/host.js"></script>
+  </body>
+</html>

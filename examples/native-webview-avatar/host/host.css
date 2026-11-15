@@ -1,0 +1,86 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #e9edf3; color: #1b2430; }
+.stage { display: flex; gap: 32px; align-items: flex-start; justify-content: center; padding: 24px; min-height: 100vh; flex-wrap: wrap; }
+
+/* ---------- phone / native app ---------- */
+.phone { position: relative; width: 390px; height: 780px; background: #f6f8fb; border: 10px solid #111; border-radius: 44px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+.appbar { display: flex; align-items: center; height: 92px; padding: 44px 12px 0; background: #fff; border-bottom: 1px solid #e3e8ef; }
+.appbar h1 { flex: 1; margin: 0; font-size: 18px; text-align: center; }
+.appbar-spacer { width: 40px; }
+.icon-btn { width: 40px; height: 40px; border: 0; background: none; font-size: 22px; cursor: pointer; }
+.menu { position: absolute; z-index: 20; top: 92px; left: 8px; display: flex; flex-direction: column; background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.2); overflow: hidden; }
+.menu[hidden] { display: none; }
+.menu button { padding: 14px 24px; border: 0; background: none; text-align: left; font-size: 16px; cursor: pointer; }
+.menu button:hover { background: #eef3fa; }
+.toast { position: absolute; z-index: 30; top: 100px; left: 16px; right: 16px; padding: 10px 14px; border-radius: 10px; background: #1b2430; color: #fff; font-size: 14px; }
+.toast[hidden] { display: none; }
+
+.pages { padding: 16px; height: calc(100% - 92px); overflow-y: auto; }
+.page[hidden] { display: none; }
+.page h2 { margin: 4px 0; }
+.page p { margin: 0 0 14px; color: #5b6676; }
+.flow { display: flex; gap: 8px; margin-bottom: 12px; }
+.flow div { flex: 1; padding: 14px 8px; background: #fff; border-radius: 12px; text-align: center; }
+.flow b { display: block; font-size: 20px; color: #f59e0b; }
+.flow span { font-size: 12px; color: #5b6676; }
+.card { display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 8px; background: #fff; border-radius: 12px; }
+.card b { font-size: 20px; }
+.list { padding-left: 18px; color: #3a4556; line-height: 1.7; }
+.tabs { display: flex; gap: 8px; margin: 8px 0 12px; }
+.tabs button { padding: 6px 14px; border: 1px solid #cbd5e1; border-radius: 99px; background: #fff; cursor: pointer; }
+.tabs button.on { background: #1b2430; border-color: #1b2430; color: #fff; }
+.primary-btn { width: 100%; margin-top: 8px; padding: 14px; border: 0; border-radius: 12px; background: #2563eb; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #5b6676; }
+.form label.check { flex-direction: row; align-items: center; gap: 8px; color: #1b2430; }
+.form select, .form input[type=time] { padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; font-size: 16px; }
+.prefill-note { padding: 8px 12px; border-radius: 10px; background: #e0ecff; color: #1d4ed8 !important; font-size: 13px; }
+.prefill-note[hidden] { display: none; }
+
+/* ---------- floating WebView container ---------- */
+.float { position: absolute; z-index: 10; width: 150px; border-radius: 18px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.35); overflow: hidden; touch-action: none; }
+.float[hidden] { display: none; }
+.float.dragging { box-shadow: 0 16px 40px rgba(0,0,0,.45); }
+.float:not(.dragging) { transition: left .2s ease, top .2s ease; }
+.float-media { position: relative; width: 150px; height: 200px; background: #0b1320; }
+.float-media > img, .float-media > video, .float-media > iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: cover; }
+.float-media > iframe { background: transparent; }
+.float-media > [hidden] { display: none; }
+.drag-surface { position: absolute; inset: 0; cursor: grab; }
+.badge { position: absolute; left: 8px; top: 8px; padding: 2px 8px; border-radius: 99px; background: rgba(0,0,0,.55); color: #fff; font-size: 11px; pointer-events: none; }
+
+/* contained: the WebView fills the screen below the app bar; the embed draws its own UI, so no drag surface or preview */
+.float.contained { left: 0 !important; top: 92px !important; right: 0; bottom: 0; width: auto; border-radius: 0; box-shadow: none; display: flex; flex-direction: column; }
+.float.contained[hidden] { display: none; }
+.float.contained .float-media { width: 100%; height: auto; flex: 1; background: #fff; }
+.float.contained .drag-surface,
+.float.contained .float-media > img,
+.float.contained .float-media > video { display: none; }
+.float.contained .badge { left: auto; right: 8px; }
+.float.contained .float-controls { border-top: 1px solid #e3e8ef; }
+.float-controls { display: flex; justify-content: center; gap: 12px; padding: 10px; }
+.round { width: 44px; height: 44px; border: 0; border-radius: 50%; background: #eef1f6; font-size: 18px; cursor: pointer; }
+.round.danger { background: #e5484d; color: #fff; }
+.round.primary { background: #2563eb; color: #fff; }
+.round.active { background: #1b2430; color: #fff; }
+
+.fab { position: absolute; z-index: 9; right: 16px; bottom: 20px; padding: 14px 20px; border: 0; border-radius: 99px; background: #2563eb; color: #fff; font-size: 15px; font-weight: 600; box-shadow: 0 8px 20px rgba(37,99,235,.4); cursor: pointer; }
+.fab[hidden] { display: none; }
+
+.home { position: absolute; z-index: 50; inset: 0; display: flex; flex-direction: column; gap: 24px; align-items: center; justify-content: center; background: linear-gradient(160deg, #334155, #0f172a); color: #fff; }
+.home[hidden] { display: none; }
+.home button { padding: 18px 22px; border: 0; border-radius: 20px; background: #fff; font-size: 17px; cursor: pointer; }
+
+/* ---------- simulator panel ---------- */
+.panel { width: 460px; max-width: 100%; }
+.hint { color: #5b6676; font-size: 14px; }
+.embed-choice { display: flex; flex-direction: column; gap: 6px; margin: 12px 0 0; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; font-size: 13px; }
+.embed-choice legend { padding: 0 4px; color: #5b6676; }
+.embed-choice:disabled { opacity: .55; }
+.panel-actions { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.panel-actions button { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; text-align: left; cursor: pointer; }
+.kv { display: flex; gap: 10px; font-size: 13px; margin-bottom: 6px; }
+.kv span { width: 60px; color: #5b6676; }
+.log { height: 380px; overflow: auto; margin: 10px 0 0; padding: 10px; border-radius: 8px; background: #0f172a; color: #cbd5e1; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+.log .out { color: #93c5fd; }
+.log .in { color: #86efac; }

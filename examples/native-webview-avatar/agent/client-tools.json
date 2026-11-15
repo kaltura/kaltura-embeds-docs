@@ -1,0 +1,36 @@
+{
+  "$comment": "Client tools the agent needs for this example. Configure them on your agent with exactly these names and argument names (case-sensitive): avatar/avatar.js registers them, host/host.js handles them. Turn on 'Wait for response' for all three.",
+  "tools": [
+    {
+      "name": "get_energy_summary",
+      "description": "Get the homeowner's energy summary for a period from the app: kWh produced, the share sent to the grid, and how evening usage changed. Call it when the user asks about their bill, production, consumption or savings. Say the returned numbers out loud, in plain language.",
+      "args": {
+        "period": { "type": "str", "required": false, "default": "last_month", "description": "Period to summarize: last_month or this_month." }
+      },
+      "waitForResponse": true,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "go_to",
+      "description": "Open one of the app's own screens for the user. Say you are going to show them first, then call it. Destinations are a fixed list. The result has ok: true when the screen opened. Only tell the user you opened it if ok is true; otherwise say you could not.",
+      "args": {
+        "destination": { "type": "str", "required": true, "description": "Screen to open. One of: energy, ev_charger, schedule." },
+        "period": { "type": "str", "required": false, "description": "Optional period to show on the energy screen: last_month or this_month." }
+      },
+      "waitForResponse": true,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "propose_charging_schedule",
+      "description": "Propose an EV charging schedule. The app shows the values pre-filled in its own schedule screen and the homeowner taps Save. Wait for the result. It has saved: true if the user saved it and saved: false if they did not. Confirm out loud that it is saved only when saved is true; if false, say the user can adjust it on the schedule screen.",
+      "args": {
+        "days": { "type": "str", "required": true, "description": "Days the schedule applies to: weekdays, weekends or daily." },
+        "start": { "type": "str", "required": true, "description": "Charging start time, 24h HH:MM, for example 23:00." },
+        "end": { "type": "str", "required": true, "description": "Charging end time, 24h HH:MM, for example 06:00." },
+        "excess_pv": { "type": "bool", "required": false, "default": true, "description": "True to also charge from excess solar (PV) production." }
+      },
+      "waitForResponse": true,
+      "timeoutSeconds": 120
+    }
+  ]
+}
