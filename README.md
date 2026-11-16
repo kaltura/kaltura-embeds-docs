@@ -10,7 +10,7 @@ Documentation: [docs.kaltura.com](https://docs.kaltura.com/docs/conversational-a
 
 | Example | What it shows | Docs |
 | --- | --- | --- |
-| [native-webview-avatar](examples/native-webview-avatar) | A conversational avatar inside a native iOS / Android / React Native app, hosted in a WebView. Headless (the avatar works with the app's content) and contained (the avatar also creates the content), a JSON bridge, client tools that open native screens and fill native forms, and resuming a conversation. | [Avatar in Native Apps](https://docs.kaltura.com/docs/conversational-agents/conversational-agents/integrations/native-apps) |
+| [react-native-avatar](examples/react-native-avatar) | A conversational avatar inside a native iOS / Android / React Native app, hosted in a WebView. Headless (the avatar works with the app's content) and contained (the avatar also creates the content), a JSON bridge, client tools that open native screens and fill native forms, and resuming a conversation. | [Avatar in Native Apps](https://docs.kaltura.com/docs/conversational-agents/conversational-agents/integrations/native-apps) |
 
 ## Running an example
 
@@ -37,5 +37,5 @@ Most examples need Node 20.6 or later and an agent (widget ID and partner ID) of
 kaltura-embeds-docs/
 ├── README.md
 └── examples/
-    └── native-webview-avatar/
+    └── react-native-avatar/
 ```

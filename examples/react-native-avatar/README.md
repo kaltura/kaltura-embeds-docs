@@ -5,11 +5,11 @@ A native iOS, Android or React Native app hosts a Kaltura conversational avatar 
 This example has two parts:
 
 ```
-native-webview-avatar/
+react-native-avatar/
 ├── avatar/          ← the page the native WebView loads. Copy this to your HTTPS host.
 ├── index.html       ← a browser simulator of the native app (phone + log)
 ├── host/            ← the simulator's "native" code: same logic a Swift / Kotlin app runs
-├── agent/           ← client tools and prompts to configure on your agent
+├── agent/           ← client tools, prompts and persona to configure on your agent
 ├── server.mjs       ← zero-dependency static server; serves .env values as /config.json
 └── .env.example
 ```
@@ -34,7 +34,7 @@ Client tools and dynamic variables work the same with both. Dynamic UI answers a
 Requires Node 20.6+ and an avatar agent of your own. No IDs are stored in the repo.
 
 ```bash
-cd examples/native-webview-avatar
+cd examples/react-native-avatar
 cp .env.example .env     # set WIDGET_ID and PARTNER_ID
 npm start                # http://localhost:4311
 ```
@@ -51,21 +51,25 @@ Open it in a desktop browser and allow the microphone. The **Fake agent** button
 
 ## Agent setup
 
-Client tools are optional, and there's no required set: these three are the example's own, for its fictional home-energy app. To run the scenario as written, the agent needs them in its configuration, and prompts that tell it when to use them:
+Client tools are optional, and there's no required set: these three are the example's own, for its fictional fitness-coach app. To run the scenario as written, the agent needs them in its configuration, and prompts that tell it when to use them:
 
-- [`agent/client-tools.json`](agent/client-tools.json): the three client tools. Names and argument names must match exactly (case-sensitive). Turn on **Wait for response** for all of them; `propose_charging_schedule` needs a 120 s timeout because the user has to tap Save.
+- [`agent/client-tools.json`](agent/client-tools.json): the three client tools, `get_training_summary`, `go_to` and `propose_workout_plan`. Names and argument names must match exactly (case-sensitive). Turn on **Wait for response** for all of them; `propose_workout_plan` needs a 120 s timeout because the user has to tap Save or Dismiss.
 - [`agent/prompt-knowledge.md`](agent/prompt-knowledge.md): persona, the flow and the facts the agent may use.
-- [`agent/prompt-app-tools.md`](agent/prompt-app-tools.md): when and how to use each tool, reading the `{{currentScreen}}` and `{{energyPeriod}}` dynamic variables the app sends.
+- [`agent/prompt-app-tools.md`](agent/prompt-app-tools.md): when and how to use each tool, reading the `{{currentScreen}}`, `{{progressPeriod}}`, `{{memberName}}` and `{{goal}}` dynamic variables the app sends.
+- [`agent/persona.md`](agent/persona.md): the agent's name, goal, target audience, restricted topics and opening phrase.
+- [`agent/flow.md`](agent/flow.md): the full scenario: screens, tool contracts, mock data and the conversation script.
 
-Work with your Kaltura contact to apply them to your agent.
+To apply them, follow [`agent/README.md`](agent/README.md). It has a prompt you can give to an AI assistant, step-by-step instructions written for AI agents, and manual console steps.
+
+Note: the app code in this folder (`host/`, `avatar/`) does not implement these tools yet; it still has the handlers of an earlier scenario. The fitness screens and handlers are the next step.
 
 ## The scenario
 
-A homeowner in the (fictional) Brightside Solar app asks "Why is my bill so high this month?":
+A member of a (fictional) training app says "I work hard but I'm not getting anywhere":
 
-1. **Numbers.** The agent calls `get_energy_summary` (`period: last_month`). The app returns `{ producedKwh: 912, exportedPct: 56, eveningUsageChangePct: 38 }` and the agent says them.
-2. **Navigate.** The agent says "Let me show you" and calls `go_to` (`destination: energy`). The app opens its native Energy screen.
-3. **Fill the app's own form.** The agent calls `propose_charging_schedule` (`weekdays`, `23:00`–`06:00`, `excess_pv: true`). The app opens its Schedule screen pre-filled, and answers `{ saved: true }` when the user taps **Save** (or `{ saved: false }` if they leave).
+1. **Numbers.** The agent calls `get_training_summary` (`period: last_week`). The app returns what it has: workouts done and planned, active minutes, average intensity, rest days, and the longest run of hard days. The agent says them.
+2. **Navigate.** The agent says "Let me show you" and calls `go_to` (`destination: progress`, `period: last_week`). The app opens its native Progress screen on that tab, and the agent explains the cause: hard days back to back with no rest.
+3. **Fill the app's own form.** The agent calls `propose_workout_plan` (for example `mon,wed,fri`, `18:00`, `moderate`). The app opens a bottom sheet pre-filled; the member can edit it and tap **Save** or **Dismiss**, and the app answers with the saved values or `{ saved: false }`.
 
 ## Bridge contract
 
