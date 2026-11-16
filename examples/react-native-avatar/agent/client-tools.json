@@ -1,0 +1,78 @@
+{
+  "$comment": "Client tools for the fitness coach flow. Configure them on your agent with exactly these names and argument names (case-sensitive): the app handles them. Turn on 'Wait for response' for all three; propose_workout_plan needs a 120 s timeout because the member has to tap Save or Dismiss.",
+  "tools": [
+    {
+      "name": "get_training_summary",
+      "description": "Get the member's training summary for a period from the app: workouts done and planned, active minutes, average intensity, rest days, the longest run of hard days in a row, and the change in minutes against the period before. Call it before you say anything about how their training is going. Say the returned numbers out loud, in plain language, and never say numbers you did not get from this tool.",
+      "args": {
+        "period": {
+          "type": "str",
+          "required": false,
+          "default": "last_week",
+          "description": "Period to summarize: this_week, last_week or last_4_weeks."
+        }
+      },
+      "waitForResponse": true,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "go_to",
+      "description": "Open one of the app's own screens for the member. Say you are going to show them first, then call it. Destinations are a fixed list. On the progress screen it can also switch the period tab. The result has ok: true when the screen opened. Only tell the member you opened it if ok is true; otherwise say you could not.",
+      "args": {
+        "destination": {
+          "type": "str",
+          "required": true,
+          "description": "Screen to open. One of: workouts, progress, plan."
+        },
+        "period": {
+          "type": "str",
+          "required": false,
+          "description": "Optional, only with progress: the period tab to show. One of: this_week, last_week, last_4_weeks."
+        }
+      },
+      "waitForResponse": true,
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "propose_workout_plan",
+      "description": "Propose a weekly workout plan. The app opens a bottom sheet with your values pre-filled; the member can change any of them and then taps Save or Dismiss. The call returns right away, as soon as the sheet is open, and it does not tell you what the member decides. Keep talking while the sheet is open: say what you filled in and ask them to check it. When the member saves or dismisses, you get a message `[app event] plan_decided`; then call get_plan_result. Never say the plan is saved before that.",
+      "args": {
+        "days": {
+          "type": "str",
+          "required": true,
+          "description": "Training days, comma-separated three-letter lower case, for example mon,wed,fri."
+        },
+        "time": {
+          "type": "str",
+          "required": true,
+          "description": "Start time, 24h HH:MM, for example 18:00."
+        },
+        "intensity": {
+          "type": "str",
+          "required": true,
+          "description": "Session intensity: light, moderate or hard."
+        },
+        "duration_min": {
+          "type": "int",
+          "required": false,
+          "default": 45,
+          "description": "Session length in minutes, 20 to 90."
+        },
+        "rest_day_after": {
+          "type": "bool",
+          "required": false,
+          "default": true,
+          "description": "True to keep the day after a hard session free (rest day)."
+        }
+      },
+      "waitForResponse": false
+    },
+    {
+      "name": "get_plan_result",
+      "description": "Get what the member did with the plan sheet you opened with propose_workout_plan. Call it only after you get the message [app event] plan_decided. It returns status: saved (with the final days, time, intensity, duration_min, rest_day_after and edited, true if they changed something you proposed), dismissed, or open (still no decision). Only say the plan is saved when status is saved, and read back the values from this result, not from your proposal.",
+      "args": {},
+      "waitForResponse": true,
+      "timeoutSeconds": 30
+    }
+  ]
+}

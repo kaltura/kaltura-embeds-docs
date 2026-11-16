@@ -1,5 +1,5 @@
 {
-  "name": "kaltura-embeds-docs-native-webview-avatar",
+  "name": "kaltura-embeds-docs-react-native-avatar",
   "private": true,
   "type": "module",
   "description": "Avatar in a native app WebView: browser simulator of the native shell plus the page the WebView loads",
