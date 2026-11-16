@@ -11,7 +11,7 @@ If you would rather configure it by hand, see [By hand in the console](#by-hand-
 
 | File | Goes to |
 | --- | --- |
-| [`client-tools.json`](client-tools.json) | Three client tools: `get_training_summary`, `go_to`, `propose_workout_plan` |
+| [`client-tools.json`](client-tools.json) | Four client tools: `get_training_summary`, `go_to`, `propose_workout_plan`, `get_plan_result` |
 | [`prompt-knowledge.md`](prompt-knowledge.md) | The agent's `knowledge` prompt |
 | [`prompt-app-tools.md`](prompt-app-tools.md) | The agent's `appTools` prompt |
 | [`persona.md`](persona.md) | The `name`, `goal`, `targetAudience` and `restrictedTopics` prompts, and the opening phrase |
@@ -74,7 +74,7 @@ POST {GENIE}/v1/intellect/get
 
 Check that `type` is `internal` (or missing). Remember `prompts` (a list), `tool_ids` (a list of `{ "id": ..., "condition": null }` objects or plain id strings) and `opening_phrase`. If the call is refused or the agent belongs to another partner, stop.
 
-### Step 2: create or update the three client tools
+### Step 2: create or update the four client tools
 
 For each tool in [`client-tools.json`](client-tools.json), look it up by name:
 
@@ -145,7 +145,7 @@ Copy the prompt files **verbatim**. Text like `{{currentScreen}}`, `{{progressPe
 
 The opening phrase is the text under "Opening phrase" in [`persona.md`](persona.md).
 
-Tool list: take the agent's current `tool_ids`, and add the ids of the three tools if they are not already attached. Do not remove anything.
+Tool list: take the agent's current `tool_ids`, and add the ids of the four tools if they are not already attached. Do not remove anything.
 
 ### Step 4: write the agent
 
@@ -166,7 +166,7 @@ POST {GENIE}/v1/intellect/update
 
 Read the agent again with `/v1/intellect/get` and check:
 
-- `tool_ids` contains the ids of `get_training_summary`, `go_to` and `propose_workout_plan`, and everything that was attached before is still there.
+- `tool_ids` contains the ids of `get_training_summary`, `go_to`, `propose_workout_plan` and `get_plan_result`, and everything that was attached before is still there.
 - The `prompts` keys include `knowledge` and `appTools`, and their values equal the file contents exactly.
 - `opening_phrase` equals the phrase from `persona.md`.
 - The prompts you did not change are unchanged.
@@ -180,14 +180,14 @@ Tell the user, in plain words: which tools were created, updated or already up t
 ### Troubleshooting
 
 - **The agent never calls the tools.** Check that the tools are attached (step 5). If the agent has a capability called `kaltura_genie_experiences` turned on, it can take priority over custom tools: ask the user to turn it off in the console.
-- **The tool is called but the agent says it timed out.** The app must answer every `toolCall` with a `toolResult` (see the bridge contract in the [example README](../README.md)). `propose_workout_plan` waits up to 120 seconds for the user.
+- **The tool is called but the agent says it timed out.** The app must answer every `toolCall` with a `toolResult` (see the bridge contract in the [example README](../README.md)). `propose_workout_plan` does not wait for the user: native answers `{ ok: true, opened: true }` when the sheet opens. When the member saves or dismisses, native sends the text `[app event] plan_decided` and the agent calls `get_plan_result` to read the decision (see [`flow.md`](flow.md)).
 - **A prompt change has no effect in a running session.** A running session may keep the prompts it started with. End the session and start a new one.
 - **403 or "not allowed".** The KS is not an admin KS for this partner, or it has expired.
 
 ## By hand in the console
 
 1. Open the agent in the Kaltura admin console.
-2. **Tools:** create three client tools with the names, descriptions and arguments from [`client-tools.json`](client-tools.json), turn **Wait for response** on, set the timeouts from the file, and attach them to the agent.
+2. **Tools:** create four client tools with the names, descriptions and arguments from [`client-tools.json`](client-tools.json), set **Wait for response** and the timeouts as in the file (on for `get_training_summary`, `go_to` and `get_plan_result`, **off** for `propose_workout_plan`), and attach them to the agent.
 3. **Prompts:** set the `knowledge` and `appTools` prompts to the contents of [`prompt-knowledge.md`](prompt-knowledge.md) and [`prompt-app-tools.md`](prompt-app-tools.md). Set the name, goal, target audience and restricted topics from [`persona.md`](persona.md).
 4. **Opening phrase:** set it to the phrase in [`persona.md`](persona.md).
 5. Start a new session to try it.

@@ -35,7 +35,7 @@
     },
     {
       "name": "propose_workout_plan",
-      "description": "Propose a weekly workout plan. The app opens a bottom sheet with your values pre-filled; the member can change any of them and then taps Save or Dismiss. Wait for the result. It has saved: true if the member saved the plan, with the final values they saved (days, time, intensity, duration_min, rest_day_after) and edited: true if they changed something you proposed. It has saved: false if they dismissed it. Only say the plan is saved when saved is true, and read back the values from the result, not from your proposal.",
+      "description": "Propose a weekly workout plan. The app opens a bottom sheet with your values pre-filled; the member can change any of them and then taps Save or Dismiss. The call returns right away, as soon as the sheet is open, and it does not tell you what the member decides. Keep talking while the sheet is open: say what you filled in and ask them to check it. When the member saves or dismisses, you get a message `[app event] plan_decided`; then call get_plan_result. Never say the plan is saved before that.",
       "args": {
         "days": {
           "type": "str",
@@ -65,8 +65,14 @@
           "description": "True to keep the day after a hard session free (rest day)."
         }
       },
+      "waitForResponse": false
+    },
+    {
+      "name": "get_plan_result",
+      "description": "Get what the member did with the plan sheet you opened with propose_workout_plan. Call it only after you get the message [app event] plan_decided. It returns status: saved (with the final days, time, intensity, duration_min, rest_day_after and edited, true if they changed something you proposed), dismissed, or open (still no decision). Only say the plan is saved when status is saved, and read back the values from this result, not from your proposal.",
+      "args": {},
       "waitForResponse": true,
-      "timeoutSeconds": 120
+      "timeoutSeconds": 30
     }
   ]
 }

@@ -51,9 +51,9 @@ Open it in a desktop browser and allow the microphone. The **Fake agent** button
 
 ## Agent setup
 
-Client tools are optional, and there's no required set: these three are the example's own, for its fictional fitness-coach app. To run the scenario as written, the agent needs them in its configuration, and prompts that tell it when to use them:
+Client tools are optional, and there's no required set: these four are the example's own, for its fictional fitness-coach app. To run the scenario as written, the agent needs them in its configuration, and prompts that tell it when to use them:
 
-- [`agent/client-tools.json`](agent/client-tools.json): the three client tools, `get_training_summary`, `go_to` and `propose_workout_plan`. Names and argument names must match exactly (case-sensitive). Turn on **Wait for response** for all of them; `propose_workout_plan` needs a 120 s timeout because the user has to tap Save or Dismiss.
+- [`agent/client-tools.json`](agent/client-tools.json): the four client tools, `get_training_summary`, `go_to`, `propose_workout_plan` and `get_plan_result`. Names and argument names must match exactly (case-sensitive). Turn on **Wait for response** for all of them except `propose_workout_plan`, which returns as soon as the sheet opens so the agent can keep talking; the app then sends the text `[app event] plan_decided` and the agent calls `get_plan_result`.
 - [`agent/prompt-knowledge.md`](agent/prompt-knowledge.md): persona, the flow and the facts the agent may use.
 - [`agent/prompt-app-tools.md`](agent/prompt-app-tools.md): when and how to use each tool, reading the `{{currentScreen}}`, `{{progressPeriod}}`, `{{memberName}}` and `{{goal}}` dynamic variables the app sends.
 - [`agent/persona.md`](agent/persona.md): the agent's name, goal, target audience, restricted topics and opening phrase.

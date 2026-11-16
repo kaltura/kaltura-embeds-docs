@@ -6,7 +6,7 @@ that the member can edit, then save or dismiss.
 
 Status: draft. This is the agent side of the example: the screens and tool handlers are for the app, the agent files
 are in this folder. The bridge contract in the [example README](../README.md) does not change; only the screens and the
-three tool handlers are new.
+four tool handlers are new.
 
 ## What this flow shows the agent can do
 
@@ -18,8 +18,9 @@ three tool handlers are new.
 | Know where the user is and what they see | Dynamic variables `currentScreen`, `progressPeriod` |
 | Personalise from profile data | Dynamic variables `memberName`, `goal` |
 | Fill a form for the user, user stays in control | `propose_workout_plan` bottom sheet, Save / Dismiss (steps 3, 4) |
-| React to what the user actually did in the sheet | Result carries the final saved values and `edited` (step 4) |
-| Recover when the user says no | `saved: false` branch (step 4b) |
+| Keep talking while the user edits the form | `propose_workout_plan` does not wait; the agent explains what it filled in (step 3) |
+| React to what the user actually did in the sheet | App event `plan_decided` triggers the agent; `get_plan_result` returns the final values and `edited` (step 4) |
+| Recover when the user says no | `get_plan_result` returns `dismissed` (step 4b) |
 
 ## Screens (what the mobile dev builds)
 
@@ -53,7 +54,8 @@ as a dismiss.
 ## Client tools
 
 The agent calls a tool, the WebView posts `toolCall {id, name, args}` to native, native
-runs it and replies with `toolResult {id, result}`. All three tools have **Wait for response** on. Argument types in the
+runs it and replies with `toolResult {id, result}`. `get_training_summary`, `go_to` and `get_plan_result` have **Wait for response** on;
+`propose_workout_plan` has it **off**, so the agent is not blocked while the sheet is open (see that tool). Argument types in the
 agent config are limited to `str`, `int` and `bool`, so lists are comma-separated strings.
 
 ### `get_training_summary`
@@ -108,6 +110,10 @@ calls it to switch the tab.
 
 ### `propose_workout_plan`
 
+**Wait for response is off.** The agent keeps talking while the sheet is open, and does not get the member's decision as
+a tool result. When the member decides, native sends a trigger text and the agent reads the decision with
+`get_plan_result` (below).
+
 | Arg | Type | Notes |
 | --- | --- | --- |
 | `days` | str, required | Comma-separated, lower case: `mon,wed,fri` |
@@ -116,16 +122,39 @@ calls it to switch the tab.
 | `duration_min` | int, optional | Default 45 |
 | `rest_day_after` | bool, optional | Default true |
 
-Result when the user taps **Save** (values are the **final** ones, after any edits):
+Native opens the sheet and answers right away with `{ "ok": true, "opened": true }`. The agent does not read this result
+(the tool does not wait). Invalid args (bad day name, malformed time): do not open the sheet; the agent does not see the
+error either, so keep the args valid in the prompts.
 
-```json
-{ "ok": true, "saved": true, "edited": true, "days": "mon,wed,sat", "time": "19:00", "intensity": "moderate", "duration_min": 45, "rest_day_after": true }
+### Trigger text: `[app event] plan_decided`
+
+When the member saves or dismisses the sheet (Save, Dismiss, swipe down, tap outside), native sends one text message to
+the agent with the `askViaText` runtime method (`avatar.askViaText(text)`):
+
+```
+[app event] plan_decided
 ```
 
-`edited` is true when the user changed anything the agent proposed. When the user dismisses, leaves, or the session ends:
-`{ "ok": true, "saved": false }`. Invalid args (bad day name, malformed time): `{ "ok": false, "error": "..." }` and no
-sheet opens. The server waits up to 120 s for the answer, so the WebView resolves with `{ ok: false, error: "native did not answer" }`
-at 110 s (already how `avatar/avatar.js` behaves).
+It carries **no data**. It only tells the agent the decision is in, so the agent calls `get_plan_result`. Send it once per
+sheet and only while the session is connected. Send nothing when the session ends or the app is backgrounded. If a new
+sheet replaces one that is still open, the old sheet's dismissal is not reported; only the latest sheet reports.
+
+### `get_plan_result`
+
+No arguments. **Wait for response is on.** The agent calls it right after the trigger text. Native answers with the
+decision for the **latest** sheet the agent opened:
+
+```json
+{ "ok": true, "status": "saved", "edited": true, "days": "mon,wed,sat", "time": "19:00", "intensity": "moderate", "duration_min": 45, "rest_day_after": true }
+```
+
+Values are the **final** ones, after any edits. `edited` is true when the member changed anything the agent proposed.
+
+| Situation | Result |
+| --- | --- |
+| Member tapped Save | `{ "ok": true, "status": "saved", ...final values, "edited": ... }` |
+| Member dismissed the sheet | `{ "ok": true, "status": "dismissed" }` |
+| Sheet still open, or no sheet opened yet | `{ "ok": true, "status": "open" }` |
 
 ## Dynamic variables (native → agent)
 
@@ -147,13 +176,16 @@ Sent in `start` and re-sent in full on every screen or tab change (`updateDynami
    The agent explains the cause: three hard sessions back to back, then it skipped the rest, which is why the later
    workouts got missed. It ties it to the goal: "for your 10K, that's the opposite of what helps."
 3. **Propose.** *Member:* "So what should I do?" The agent suggests three moderate sessions a week with a rest day after, and calls
-   `propose_workout_plan` (`mon,wed,fri`, `18:00`, `moderate`, 45, rest day on). The sheet opens over Progress.
-   The agent says what it filled in and asks the member to check it.
-4. **Confirm.** The member changes Friday to Saturday and taps Save. Result: `saved: true, edited: true, days "mon,wed,sat"`.
-   The agent confirms the plan **as saved** ("Monday, Wednesday and Saturday at 6, moderate, with a rest day after") and
+   `propose_workout_plan` (`mon,wed,fri`, `18:00`, `moderate`, 45, rest day on). The sheet opens over Progress and the tool
+   returns at once. **The agent keeps talking while the sheet is open:** it says what it filled in and asks the member to
+   check it and change whatever doesn't suit them. Then it waits.
+4. **Confirm.** The member changes Friday to Saturday and taps Save. Native sends the text `[app event] plan_decided`.
+   The agent calls `get_plan_result` and gets `status: saved, edited: true, days "mon,wed,sat"`.
+   It confirms the plan **as saved** ("Monday, Wednesday and Saturday at 6, moderate, with a rest day after") and
    does not repeat its own original proposal.
-   - **4b. Dismiss.** If the member dismisses (`saved: false`), the agent does not say it is saved. It asks what felt wrong
-     (days, time, intensity) and offers to propose again, or says they can build it on the Plan screen.
+   - **4b. Dismiss.** If the member dismisses, native sends the same trigger text and `get_plan_result` returns
+     `status: dismissed`. The agent does not say it is saved. It asks what felt wrong (days, time, intensity) and offers
+     to propose again, or says they can build it on the Plan screen.
 5. **Follow-up (tab switch).** *Member:* "And how did the last month look?" Agent calls `get_training_summary`
    (`last_4_weeks`), then `go_to` (`progress`, `last_4_weeks`) while it explains the downward trend, even though the member is
    already on Progress. Optional: "Want to see your new plan?" then `go_to` (`plan`).
@@ -163,7 +195,8 @@ Sent in `start` and re-sent in full on every screen or tab change (`updateDynami
 - Numbers only from the tools. Never invent workout data.
 - Always `get_training_summary` before talking about performance, and say the numbers aloud in plain language.
 - Say "Let me show you." before `go_to`; only say a screen is open when the result has `ok: true`.
-- Only say a plan is saved when the result has `saved: true`, and read back the values from the result, not from the proposal.
+- Only say a plan is saved when `get_plan_result` returned `saved`, and read back the values from that result, not from the proposal.
+- `[app event]` messages come from the app, not from the member: act on them (for `plan_decided`, call `get_plan_result`), never read the tag aloud.
 - No medical advice: no injury diagnosis, no calorie or supplement advice, suggest a professional for pain.
 - Don't call the same tool twice in a row for one request.
 
@@ -171,9 +204,9 @@ Sent in `start` and re-sent in full on every screen or tab change (`updateDynami
 
 | File | What it is |
 | --- | --- |
-| [`client-tools.json`](client-tools.json) | The three client tools: names, descriptions, arguments, **Wait for response**, timeouts |
+| [`client-tools.json`](client-tools.json) | The four client tools: names, descriptions, arguments, **Wait for response**, timeouts |
 | [`prompt-knowledge.md`](prompt-knowledge.md) | The `knowledge` prompt: persona, the flow, objections, verified information |
 | [`prompt-app-tools.md`](prompt-app-tools.md) | The `appTools` prompt: when and how to use each tool, reading the dynamic variables |
 | [`persona.md`](persona.md) | The agent's name, goal, target audience, restricted topics and opening phrase |
 
-The app can be built without the agent: mock the three tool handlers with the data above.
+The app can be built without the agent: mock the four tool handlers with the data above.
