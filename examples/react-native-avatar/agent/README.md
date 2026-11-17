@@ -19,7 +19,13 @@ The setup creates a **new** agent on your partner. It does not touch your other 
 
 ## For you: let an AI assistant do it
 
-You need two values from your Kaltura partner: the **partner ID** and the **admin secret** (in the Kaltura Management Console, under Settings, Integration Settings). Treat the admin secret like a password.
+You need two values from your Kaltura partner: the **partner ID** and the **admin secret**. Treat the admin secret like a password.
+
+**Get them from the Kaltura Management Console (KMC):**
+
+1. Sign in to the KMC with an administrator account of your partner: [kmc.kaltura.com](https://kmc.kaltura.com) for the US production region. On another region or environment, use the KMC address your Kaltura contact gave you.
+2. Open **Settings**, then **Integration Settings**.
+3. Copy the **Partner ID** and the **Administrator Secret** (not the User Secret). Keep them for the `.env` file in step 2 below.
 
 Do not paste the admin secret into the chat: everything you type there becomes part of the conversation transcript. Put it in a local `.env` file instead. The file is git-ignored, so it is never committed, and the assistant reads it from the shell without printing it.
 
