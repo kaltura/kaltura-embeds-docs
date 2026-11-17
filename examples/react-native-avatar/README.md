@@ -59,7 +59,7 @@ Client tools are optional, and there's no required set: these four are the examp
 - [`agent/persona.md`](agent/persona.md): the agent's name, goal, target audience, restricted topics and opening phrase.
 - [`agent/flow.md`](agent/flow.md): the full scenario: screens, tool contracts, mock data and the conversation script.
 
-To apply them, follow [`agent/README.md`](agent/README.md). It has a prompt you can give to an AI assistant, step-by-step instructions written for AI agents, and manual console steps.
+To apply them, follow [`agent/README.md`](agent/README.md). It creates a new agent for you through the Kaltura APIs with your partner ID and admin secret (kept in `.env`, never pasted into chat), and has a prompt you can give to an AI assistant plus step-by-step instructions written for AI agents.
 
 Note: the app code in this folder (`host/`, `avatar/`) does not implement these tools yet; it still has the handlers of an earlier scenario. The fitness screens and handlers are the next step.
 
