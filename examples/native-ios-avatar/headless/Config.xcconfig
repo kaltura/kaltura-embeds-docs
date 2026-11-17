@@ -1,0 +1,4 @@
+// PARTNER_ID and WIDGET_ID come from the .env file next to this file (copy .env.example to create it).
+// Use plain KEY=value lines: no quotes and no comments. The include is optional, so a missing file is not an error.
+// You can also pass them on the command line: xcodebuild ... PARTNER_ID=123 WIDGET_ID=abc
+#include? ".env"

@@ -1,0 +1,21 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# IDEs
+.idea/
+*.iml
+
+# Android / Gradle
+.gradle/
+build/
+local.properties
+.cxx/
+.externalNativeBuild/
+.kotlin/
+captures/
+*.hprof
+*.jks
