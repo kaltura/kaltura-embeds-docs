@@ -90,6 +90,32 @@ adb reverse tcp:8081 tcp:8081
 
 You can also open the `android` folder in Android Studio and press Run.
 
+## Release build
+
+A release build bundles the JavaScript into the app, so it runs without Metro. The `.env` values are baked in at build time, so rebuild after changing them.
+
+### Android
+
+```sh
+yarn android --mode release
+```
+
+This builds the release variant and installs it on the connected device or emulator. To only build the APK:
+
+```sh
+cd android && ./gradlew assembleRelease
+```
+
+The APK is written to `android/app/build/outputs/apk/release/app-release.apk`. In this example the release build is signed with the debug keystore and ProGuard is off, which is fine for testing but not for Google Play. For a store build, create your own keystore and signing configuration (see [Publishing to Google Play Store](https://reactnative.dev/docs/signed-apk-android)) and build a bundle with `./gradlew bundleRelease`. Never commit a keystore or its passwords.
+
+### iOS
+
+```sh
+yarn ios --mode Release
+```
+
+For a physical device or the App Store, open `ios/ReactNativeAvatar.xcworkspace` in Xcode, choose your development team under **Signing & Capabilities**, and use **Product > Archive**.
+
 ## Other scripts
 
 ```sh
