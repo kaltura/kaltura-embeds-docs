@@ -12,16 +12,17 @@ Documentation: [docs.kaltura.com](https://docs.kaltura.com/docs/conversational-a
 | --- | --- | --- |
 | [react-native-avatar/headless](examples/react-native-avatar/headless) | A React Native (iOS and Android) fitness-coach app with the avatar hosted in a WebView in headless mode: the SDK renders only the avatar video, shown in a draggable, dockable window over the app's own screens, with mute and end buttons drawn by the app. A JSON bridge between the page and native code, client tools that switch tabs and open a workout-plan sheet, and resuming a conversation. | [Avatar in Native Apps](https://docs.kaltura.com/docs/conversational-agents/conversational-agents/integrations/native-apps) |
 | [react-native-avatar/contained](examples/react-native-avatar/contained) | The same app in contained mode: the SDK renders the whole stage, controls included, and the app opens it full screen inside the safe area and closes it when the session disconnects. Same bridge, client tools and conversation resume as the headless variant. | [Avatar in Native Apps](https://docs.kaltura.com/docs/conversational-agents/conversational-agents/integrations/native-apps) |
+| [native-android-avatar/headless](examples/native-android-avatar/headless) | The same fitness-coach app as a native Android app (Kotlin and Jetpack Compose), with the avatar in a WebView in headless mode: a draggable, dockable window with app-drawn mute and end buttons, the same page and JSON bridge, the same four client tools, and conversation resume. | [Avatar in Native Apps](https://docs.kaltura.com/docs/conversational-agents/conversational-agents/integrations/native-apps) |
 | [native-avatar-agent](examples/native-avatar-agent) | The agent behind the avatar examples: four client tools, prompts, persona and the scenario flow, plus instructions for an AI assistant to create the agent on your partner. Set this up first, then put the new agent's ID in the app's `.env`. | [Avatar in Native Apps](https://docs.kaltura.com/docs/conversational-agents/conversational-agents/integrations/native-apps) |
 
 ## Running an example
 
-1. Create the agent the example talks to (for the avatar examples, follow [native-avatar-agent](examples/native-avatar-agent)). Both React Native variants use the same agent.
+1. Create the agent the example talks to (for the avatar examples, follow [native-avatar-agent](examples/native-avatar-agent)). The React Native and native Android apps all use the same agent.
 2. Copy the example's `.env.example` to `.env` and fill in your IDs.
-3. Follow the example's own README: prerequisites and run commands differ per example (for instance, the React Native app needs Node 22.11 or later, Yarn 4 and an iOS or Android toolchain).
+3. Follow the example's own README: prerequisites and run commands differ per example (for instance, the React Native app needs Node 22.11 or later, Yarn 4 and an iOS or Android toolchain, and the native Android app needs Android Studio).
 
 ```bash
-cd examples/<name>
+cd examples/<name>/<variant>
 cp .env.example .env    # fill in your IDs
 ```
 
@@ -40,6 +41,8 @@ cp .env.example .env    # fill in your IDs
 kaltura-embeds-docs/
 ├── README.md
 └── examples/
+    ├── native-android-avatar/
+    │   └── headless/            native Android app (Kotlin, Compose), headless avatar
     ├── native-avatar-agent/     agent setup shared by the avatar examples
     └── react-native-avatar/
         ├── headless/            React Native app, headless avatar
