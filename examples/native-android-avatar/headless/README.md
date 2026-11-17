@@ -4,6 +4,20 @@ A native Android demo app (Kotlin and Jetpack Compose) that embeds the Kaltura A
 
 This is the native counterpart of [react-native-avatar/headless](../../react-native-avatar/headless): the same fitness-coach screens, the same page and JSON bridge, the same four client tools, and the same agent (see [native-avatar-agent](../../native-avatar-agent)).
 
+## Headless and contained
+
+This repo has the same app in two variants. Pick the one that matches how you want to present the avatar.
+
+| | Headless (this app) | [Contained](../contained) |
+| --- | --- | --- |
+| SDK call | `avatar.headless()` | `avatar.contained()` |
+| What the SDK renders | The avatar video only | The whole stage, controls included |
+| Avatar window | A small window, draggable and dockable at the screen edge | Full screen inside the safe area |
+| Mute and end | Buttons the app draws in the page | Controls of the SDK stage |
+| Session ends when | The member taps the app's end button | The SDK reports the `disconnecting` status |
+
+Everything else is shared: the fitness-coach screens, the JSON bridge, the four client tools, and resuming the conversation thread. Both variants use the same agent and the same `.env` values, and both use the application ID `com.kaltura.avatar`, so installing one replaces the other on the same device or emulator.
+
 ## Prerequisites
 
 - Android Studio, with an Android emulator or a connected device (USB debugging enabled)

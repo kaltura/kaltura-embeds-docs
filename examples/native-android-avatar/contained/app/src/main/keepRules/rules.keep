@@ -1,0 +1,17 @@
+# Add project specific R8 rules here.
+# AGP will combine all keep rule files in src/main/keepRules to pass to R8
+#
+# For more details, see
+#   https://d.android.com/r/tools/r8/keep-rules
+
+# Lets R8 widen access when it moves or merges classes. Without it, a repackaged class can extend a
+# package-private base class from another package and crash with IllegalAccessError.
+-allowaccessmodification
+
+# The page calls AndroidBridge.postMessage(...) from JavaScript. R8 cannot see that call, so release
+# builds need both the method and the runtime @JavascriptInterface annotation that WebView looks for.
+# Without them the bridge goes silent: the end button, tool calls and thread saving all stop working.
+-keepattributes *Annotation*
+-keepclassmembers class com.kaltura.avatar.AvatarController {
+    @android.webkit.JavascriptInterface <methods>;
+}
