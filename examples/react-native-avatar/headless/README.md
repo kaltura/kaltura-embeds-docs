@@ -1,6 +1,20 @@
 # React Native Avatar (headless)
 
-A React Native 0.88 demo app that embeds the Kaltura Agent avatar in a WebView. The avatar can be dragged around the screen and docked off the edge. It also calls native client tools, such as navigating between tabs and proposing a workout plan.
+A React Native 0.88 demo app that embeds the Kaltura Agent avatar in a WebView in **headless** mode: the SDK renders only the avatar video, and the app draws everything around it. The avatar sits in a small window that can be dragged around the screen and docked off the edge, with mute and end buttons drawn by the app. It also calls native client tools, such as navigating between tabs and proposing a workout plan.
+
+## Headless and contained
+
+This repo has the same app in two variants. Pick the one that matches how you want to present the avatar.
+
+| | Headless (this app) | [Contained](../contained) |
+| --- | --- | --- |
+| SDK call | `avatar.headless()` | `avatar.contained()` |
+| What the SDK renders | The avatar video only | The whole stage, controls included |
+| Avatar window | A small window, draggable and dockable at the screen edge | Full screen inside the safe area |
+| Mute and end | Buttons the app draws in the page | Controls of the SDK stage |
+| Session ends when | The member taps the app's end button | The SDK reports the `disconnecting` status |
+
+Everything else is shared: the fitness-coach screens, the JSON bridge, the four client tools, and resuming the conversation thread. Both variants use the same agent (see [native-avatar-agent](../../native-avatar-agent)) and the same `.env` values, and both use the app ID `com.reactnativeavatar` (Android) and the same bundle ID prefix (iOS), so installing one replaces the other on the same device or simulator.
 
 ## Prerequisites
 
