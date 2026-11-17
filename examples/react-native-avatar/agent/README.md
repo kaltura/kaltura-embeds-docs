@@ -23,14 +23,14 @@ You need two values from your Kaltura partner: the **partner ID** and the **admi
 
 **Get them from the Kaltura Management Console (KMC):**
 
-1. Sign in to the KMC with an administrator account of your partner: [kmc.kaltura.com](https://kmc.kaltura.com) for the US production region. On another region or environment, use the KMC address your Kaltura contact gave you.
+1. Sign in to the KMC with an administrator account of your partner: [kmc.kaltura.com](https://kmc.kaltura.com) for the US production region. On another region or environment, use the KMC address your Kaltura contact gave you, and set `REGION` in `.env` to that region.
 2. Open **Settings**, then **Integration Settings**.
 3. Copy the **Partner ID** and the **Administrator Secret** (not the User Secret). Keep them for the `.env` file in step 2 below.
 
 Do not paste the admin secret into the chat: everything you type there becomes part of the conversation transcript. Put it in a local `.env` file instead. The file is git-ignored, so it is never committed, and the assistant reads it from the shell without printing it.
 
 1. Open your coding assistant in this repo (it needs to read files and run shell commands).
-2. Create the `.env` file and fill in `PARTNER_ID` and `ADMIN_SECRET`:
+2. Create the `.env` file and fill in `PARTNER_ID` and `ADMIN_SECRET`. Leave `REGION=nvp1` for the US production region; otherwise set the region of your partner:
 
    ```bash
    cd examples/react-native-avatar
@@ -67,10 +67,15 @@ From `.env` (load it in the shell, do not read it):
 | --- | --- |
 | `PARTNER_ID` | The partner that owns the agent |
 | `ADMIN_SECRET` | To mint an admin KS (Kaltura session) |
-| `KALTURA_API_URL` | Optional. Default `https://www.kaltura.com/api_v3` |
-| `GENIE_API_URL` | Optional. Default `https://genie.nvp1.ovp.kaltura.com` (call it `GENIE`) |
+| `REGION` | The region of the partner, for example `nvp1` (US production, the template default). It sets the hosts below |
+| `KALTURA_API_URL` | Optional override of the Kaltura API host |
 
-If `PARTNER_ID` or `ADMIN_SECRET` is empty, stop and ask the user to fill it in `.env`. The defaults are for the US production region. If the partner is on another region or environment, the hosts are in the [Agentic API reference](https://nvq2-docs-staging.kaltura-ovp.eu.sdm.network/preview/api-references/docs/api-references/agentic-api/quick-start#from-one-sentence); ask the user to set `KALTURA_API_URL` and `GENIE_API_URL` in `.env`.
+Hosts, from `REGION`:
+
+- Genie API (call it `GENIE`): `https://genie.$REGION.ovp.kaltura.com`
+- Kaltura API: `https://www.kaltura.com/api_v3` for `nvp1`, otherwise `https://api.$REGION.ovp.kaltura.com/api_v3`, unless `KALTURA_API_URL` is set
+
+If `PARTNER_ID` or `ADMIN_SECRET` is empty, stop and ask the user to fill it in `.env`. If `REGION` is empty, use `nvp1`. The partner's region is the one the KMC runs in (see [For you](#for-you-let-an-ai-assistant-do-it)). If a call to these hosts fails with a connection error, check the hosts for your region in the [Agentic API reference](https://nvq2-docs-staging.kaltura-ovp.eu.sdm.network/preview/api-references/docs/api-references/agentic-api/quick-start#from-one-sentence) and ask the user to correct `REGION` or `KALTURA_API_URL`.
 
 ### Step 0: get an admin KS
 
@@ -78,14 +83,16 @@ Every Genie call needs a KS. Mint an admin KS with the `disableentitlement` priv
 
 ```bash
 set -a; . ./.env; set +a
-KS=$(curl -s "${KALTURA_API_URL:-https://www.kaltura.com/api_v3}/service/session/action/start" \
+REGION=${REGION:-nvp1}
+if [ "$REGION" = nvp1 ]; then API=https://www.kaltura.com/api_v3; else API=https://api.$REGION.ovp.kaltura.com/api_v3; fi
+KS=$(curl -s "${KALTURA_API_URL:-$API}/service/session/action/start" \
   -d format=1 -d partnerId="$PARTNER_ID" -d secret="$ADMIN_SECRET" \
   -d type=2 -d expiry=3600 -d privileges=disableentitlement | tr -d '"')
 ```
 
 The result is the KS as a plain string. If it starts with `{`, it is an error object: show its `message` and stop. Never print the KS.
 
-All Genie calls are `POST` with JSON bodies and the headers `Content-Type: application/json` and `Authorization: KS $KS`. `GENIE` is `${GENIE_API_URL:-https://genie.nvp1.ovp.kaltura.com}`.
+All Genie calls are `POST` with JSON bodies and the headers `Content-Type: application/json` and `Authorization: KS $KS`. `GENIE` is `https://genie.$REGION.ovp.kaltura.com`.
 
 ### Step 1: create the agent, then read it
 
