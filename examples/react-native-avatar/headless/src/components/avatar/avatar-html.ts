@@ -1,0 +1,330 @@
+import { BRAND, BRAND_PRESSED } from '../../theme';
+import { DynamicVariables } from './dynamic-variables';
+
+type Variables = {
+  partnerId: string;
+  dynamicVariables: DynamicVariables;
+  thread: string | undefined;
+  widgetId: string;
+};
+
+export function renderHtml({
+  partnerId,
+  dynamicVariables,
+  thread,
+  widgetId,
+}: Variables) {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <style>
+          html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+          #avatar-root { position: fixed; top: 0; left:0; width: 100%; height: 100%; }
+          #avatar-root video { width: auto !important; }
+          #loader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 48px;
+            height: 48px;
+            margin: -24px 0 0 -24px;
+            fill: ${BRAND};
+            animation: breathe 1.6s ease-in-out infinite;
+          }
+
+          @keyframes breathe {
+            0%, 100% { transform: scale(0.8); opacity: 0.45; }
+            50% { transform: scale(1.1); opacity: 1; }
+          }
+          #mute {
+            position: fixed;
+            left: 8px;
+            bottom: 8px;
+            z-index: 10;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: ${BRAND};
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            -webkit-tap-highlight-color: transparent;
+          }
+          #mute:active { background: ${BRAND_PRESSED}; }
+          #end {
+            position: fixed;
+            right: 8px;
+            bottom: 8px;
+            z-index: 10;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: #3a3a3c;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            -webkit-tap-highlight-color: transparent;
+          }
+          #end:active { background: #1c1c1e; }
+          #end.connected { display: flex; }
+          #end svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+          #mute svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+          #mute.connected { display: flex; }
+          #mute .strike { display: none; }
+          #mute.muted .strike { display: block; }
+        </style>
+      </head>
+      <body>
+        <svg id="loader" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"></path>
+        </svg>
+        <div id="avatar-root"></div>
+        <button id="mute" type="button" aria-label="Mute" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <g class="mic">
+              <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+              <path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path>
+            </g>
+            <line class="strike" x1="3" y1="3" x2="21" y2="21"></line>
+          </svg>
+        </button>
+        <button id="end" type="button" aria-label="End session">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18"></path>
+          </svg>
+        </button>
+        <script type='module'>
+          let avatar = null;
+          let instance = null;
+          let muted = false;
+          let connected = false;
+          let dynamicVariables = ${JSON.stringify(dynamicVariables)};
+          let nextToolCallId = 0;
+
+          const pendingToolCalls = new Map();
+          const loader = document.getElementById('loader');
+          const muteButton = document.getElementById('mute');
+          const endButton = document.getElementById('end');
+
+          function postMessage(message) {
+            window.ReactNativeWebView.postMessage(JSON.stringify(message))
+          }
+
+          function toggleMuted() {
+            muteButton.classList.toggle('muted', muted);
+          }
+
+          function showControls(visible) {
+            muteButton.classList.toggle('connected', visible);
+            endButton.classList.toggle('connected', visible);
+          }
+
+          function handleMuteClick() {
+            if (muted) {
+              avatar?.unmute();
+            } else {
+              avatar?.mute();
+            }
+          }
+
+          function callTool(name, args = {}) {
+            return new Promise((resolve, reject) => {
+              const id = ++nextToolCallId;
+
+              console.log('WebView | tool call', JSON.stringify({ id, name, args }));
+
+              pendingToolCalls.set(id, { resolve, reject });
+              postMessage({ type: 'tool', tool: { id, name, args } });
+            });
+          }
+
+          function handleToolResult({ id, data, error }) {
+            const pending = pendingToolCalls.get(id);
+
+            if (!pending) {
+              return;
+            }
+
+            pendingToolCalls.delete(id);
+
+            if (error) {
+              pending.reject(new Error(error));
+
+              console.log('WebView | tool call error', error);
+            } else {
+              pending.resolve(data);
+
+              console.log('WebView | tool call result', data);
+            }
+          }
+
+          function handleScreenChanged(next) {
+            dynamicVariables = next;
+
+            if (!instance) {
+              return;
+            }
+            console.log('WebView | onScreenChanged', JSON.stringify(next));
+
+            avatar.updateDynamicVariables(next);
+          }
+
+          // native -> agent: send text as if typed; the agent answers by voice. Used for "[app event] ..." messages.
+          function handleAgentText(text) {
+            if (!instance || !connected || document.hidden) {
+              console.log('WebView | askViaText skipped, no live session');
+
+              return;
+            }
+            console.log('WebView | askViaText', text);
+
+            avatar.askViaText(text);
+          }
+
+          async function fetchAvatar() {
+            if (avatar) {
+              return avatar;
+            }
+
+            try {
+              const { embeds } = await import('https://unisphere.nvp1.ovp.kaltura.com/v1/loader/index.esm.js');
+              const { destroy, apis } = await embeds.workspace({
+                apis: ['genieAvatar'],
+                session: {
+                  widgetId: '${widgetId}',
+                  partnerId: ${partnerId},
+                },
+              });
+
+              avatar = apis.genieAvatar
+
+              return avatar;
+            } catch (error) {
+              postMessage({ type: 'error', reason: 'Unabled to fetch Avatar' });
+            }
+          }
+
+          function mountAvatar(avatar) {
+            const context = ${
+              thread ? `{ type: 'thread', threadId: '${thread}' }` : undefined
+            }
+
+            return avatar.headless({
+              elementId: 'avatar-root',
+              autoConnect: true,
+              connect: {
+                dynamicVariables,
+                context,
+                onThreadIdChange: (id) => postMessage({ type: 'thread', id: id }),
+              },
+            });
+          }
+
+          function resumeSession() {
+            if (!avatar) {
+              return
+            }
+            console.log('WebView | resuming session');
+
+            instance = mountAvatar(avatar);
+          }
+
+          function endSession() {
+            if (!instance) {
+              return
+            }
+            console.log('WebView | ending session');
+
+            instance.remove();
+            instance = null;
+            connected = false;
+            showControls(false);
+          }
+
+          function handleEndClick() {
+            postMessage({ type: 'end' });
+          }
+
+          function handleVisibilityChange() {
+            loader.style.display = document.hidden ? 'none' : '';
+
+            if (document.hidden) {
+              endSession();
+            } else {
+              resumeSession();
+            }
+          }
+
+          function handleError(error) {
+            postMessage({ type: 'error', reason: error.message });
+          }
+
+          function handleUnhandledRejection(error) {
+            postMessage({ type: 'error', reason: String(error.reason.message || error.reason) });
+          }
+
+          async function initAvatar() {
+            console.log('WebView | creating sesssion, screen: ${
+              dynamicVariables.currentScreen
+            }, thread: ${thread}')
+
+            try {
+              const avatar = await fetchAvatar();
+
+              avatar.connectionStatus.onChanges((status) => {
+                connected = status === 'connected';
+                showControls(connected);
+                postMessage({ type: 'status', status });
+              }, { replayLastValue: true });
+
+              avatar.audioState.onChanges(({ muted: isMuted, isSpeaking }) => {
+                muted = isMuted;
+                toggleMuted();
+              }, { replayLastValue: true });
+
+              avatar.registerClientTools({
+                get_training_summary: (args) => callTool('get_training_summary', args),
+                go_to: (args) => callTool('go_to', args),
+                propose_workout_plan: (args) => callTool('propose_workout_plan', args),
+                get_plan_result: (args) => callTool('get_plan_result', args),
+              });
+
+              instance = mountAvatar(avatar);
+            } catch (error) {
+              postMessage({ type: 'error', reason: error.message });
+            }
+          }
+
+          function attachEvents() {
+            muteButton.addEventListener('click', handleMuteClick);
+            endButton.addEventListener('click', handleEndClick);
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            window.addEventListener('error', handleError);
+            window.addEventListener('unhandledrejection', handleUnhandledRejection);
+          }
+
+          function exposeGlobals() {
+            window.onScreenChanged = handleScreenChanged;
+            window.onToolResult = handleToolResult;
+            window.onAgentText = handleAgentText;
+          }
+
+          attachEvents();
+          exposeGlobals();
+          initAvatar();
+        </script>
+      </body>
+    </html>
+  `;
+}
